@@ -1,0 +1,205 @@
+{
+  "name": "ai-news-digest",
+  "nodes": [
+    {
+      "parameters": {
+        "url": "https://habr.com/ru/rss/all/all/",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.rssFeedRead",
+      "typeVersion": 1.2,
+      "position": [
+        224,
+        0
+      ],
+      "id": "969f80b2-4088-4d8c-a395-d955d6abd99d",
+      "name": "RSS Read"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Напиши одно короткое предложение (резюме) по этой новости:\n\n{{ $items(\"RSS Read\").slice(0, 1).map(item => item.json.title).join('') }}",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        672,
+        0
+      ],
+      "id": "ad4d1c0f-a1d6-4e73-8f0f-578ede70e27d",
+      "name": "AI Agent"
+    },
+    {
+      "parameters": {
+        "model": "openai/gpt-oss-20b",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGroq",
+      "typeVersion": 1,
+      "position": [
+        320,
+        208
+      ],
+      "id": "96bdad5b-3454-4d28-b66c-0da464792e6c",
+      "name": "Groq Chat Model",
+      "credentials": {
+        "groqApi": {
+          "id": "gh5prgVuHBMNjAA9",
+          "name": "Groq account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "chatId": "YOUR_CHATID",
+        "text": "={{ $json.message }}",
+        "additionalFields": {
+          "parse_mode": "HTML"
+        }
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        1168,
+        0
+      ],
+      "id": "51fa2cbd-c6eb-44ad-b5ab-993274f98cd0",
+      "name": "Send a text message",
+      "webhookId": "6d1d92a6-c10f-47f0-ba25-cbe7c9e3916b",
+      "credentials": {
+        "telegramApi": {
+          "id": "ILdkyD9BaGkUMMJi",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const aiSummary = $json.output || $json.text || $json;\nconst date = new Date().toLocaleDateString('ru-RU');\n\nconst finalMessage = `📰 <b>AI-дайджест новостей за ${date}</b>\n\n${aiSummary}\n\n<i>Собрано с помощью n8n + AI</i>`;\n\nreturn { message: finalMessage };"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        976,
+        0
+      ],
+      "id": "cc184665-52a2-443f-8fe8-f676c25d8372",
+      "name": "Code in JavaScript"
+    },
+    {
+      "parameters": {
+        "maxItems": 5
+      },
+      "type": "n8n-nodes-base.limit",
+      "typeVersion": 1,
+      "position": [
+        448,
+        0
+      ],
+      "id": "2c50fb0a-12be-4b0a-a1b5-a8430eb5adc0",
+      "name": "Limit"
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "triggerAtHour": 2
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.4,
+      "position": [
+        48,
+        0
+      ],
+      "id": "a2ce7b1e-2db2-4fce-a3f5-563bf1f77f42",
+      "name": "Schedule Trigger"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "RSS Read": {
+      "main": [
+        [
+          {
+            "node": "Limit",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Groq Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript": {
+      "main": [
+        [
+          {
+            "node": "Send a text message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Limit": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Schedule Trigger": {
+      "main": [
+        [
+          {
+            "node": "RSS Read",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "5ef6bc21-c436-4cd1-8978-72bb76c38775",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "e67bdb38dd76d66e17f350d24ffeda9839380df86968454d7e96bdcd2680c48b"
+  },
+  "nodeGroups": [],
+  "id": "O4AQRXJG5JruFQwO",
+  "tags": []
+}

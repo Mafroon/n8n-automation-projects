@@ -1,0 +1,122 @@
+{
+  "name": "weather-bot",
+  "nodes": [
+    {
+      "parameters": {
+        "url": "https://api.openweathermap.org/data/2.5/weather?q=Самара&appid=YOUR_OPENWEATHER_API_KEY&units=metric&lang=ru",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.5,
+      "position": [
+        224,
+        0
+      ],
+      "id": "b9a60abc-42f1-4b4b-9dbf-490d3d0c4874",
+      "name": "HTTP Request"
+    },
+    {
+      "parameters": {
+        "jsCode": "const weather = $json;\nconst city = weather.name;\nconst temp = weather.main.temp.toFixed(1); // Округляем до одного знака после запятой\nconst feelsLike = weather.main.feels_like.toFixed(1);\nconst description = weather.weather[0].description;\nconst humidity = weather.main.humidity;\nconst windSpeed = weather.wind.speed;\n\nconst message = `🌤 Погода в городе: ${city}\n\n🌡 Температура: ${temp}°C (ощущается как ${feelsLike}°C)\n📖 Описание: ${description}\n💧 Влажность: ${humidity}%\n💨 Ветер: ${windSpeed} м/с`;\n\nreturn { message };"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        448,
+        0
+      ],
+      "id": "a4481702-958b-4bdb-9898-dbe09062e97d",
+      "name": "Code in JavaScript"
+    },
+    {
+      "parameters": {
+        "chatId": "YOUR_CHATID",
+        "text": "={{ $json.message }}",
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        672,
+        0
+      ],
+      "id": "678b4404-b038-48d1-a8b7-bbbf89950b0d",
+      "name": "Send a text message",
+      "webhookId": "4eccb296-ab51-4885-a4ae-e04bc9fc9f40",
+      "credentials": {
+        "telegramApi": {
+          "id": "ILdkyD9BaGkUMMJi",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "triggerAtHour": 1
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.4,
+      "position": [
+        0,
+        0
+      ],
+      "id": "84a9105c-876e-4c93-86dd-ca6e4e2faa5e",
+      "name": "Schedule Trigger"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "HTTP Request": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript": {
+      "main": [
+        [
+          {
+            "node": "Send a text message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Schedule Trigger": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "d86565d7-bc41-41ad-a0db-0b42ecfb0159",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "e67bdb38dd76d66e17f350d24ffeda9839380df86968454d7e96bdcd2680c48b"
+  },
+  "nodeGroups": [],
+  "id": "vvB4RmaZlDdyw6Wh",
+  "tags": []
+}
